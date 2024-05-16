@@ -10,7 +10,7 @@
 
 const char* ssid = "MQTT Test";
 const char* password = "tomato45";
-const char* mqtt_server = "test.mosquitto.org";
+const char* mqtt_server = "broker.hivemq.com";
 const int mqtt_port = 1883;
 const char* mqtt_topic = "sensor_data";
 
@@ -23,17 +23,29 @@ unsigned long previousMillis = 0;
 /// @brief Function that sets up the wifi connection.
 void setup_wifi() {
   delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
     delay(500);
   }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
 }
 
 /// @brief Function to check if the ESP is reconnecting (debugging purposes)
 void reconnect() {
   while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
     if (client.connect("ESP32Client")) {
+      Serial.println("connected");
     } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
       delay(5000);
     }
   }
@@ -50,6 +62,7 @@ void loop() {
   if (!client.connected()) {
     reconnect();
   }
+
   client.loop();
 
   unsigned long currentMillis = millis();
@@ -65,6 +78,7 @@ void loop() {
     serializeJson(doc, jsonStr);
 
     client.publish(mqtt_topic, jsonStr.c_str());
+    Serial.println(sensor_value);
 
     Serial2.println("ON");
     
