@@ -1,6 +1,10 @@
 #include "WiFi.h"
 #include "PubSubClient.h"
 
+#define RXPIN2 16
+#define TXPIN2 17
+
+
 const char* ssid = "MQTT Test";
 const char* password = "tomato45";
 const char* mqtt_server = "broker.hivemq.com";
@@ -10,6 +14,9 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 String previousMessage;
+
+int soil = 0;
+int prev_soil;
 
 void setup_wifi() {
   delay(10);
@@ -42,11 +49,14 @@ void callback(String topic, byte* message, unsigned int length){
     if (messageTemp != previousMessage){
       Serial.print("message received: ");
       if (messageTemp == "Dirt"){
-        Serial2.println("ON");
+        Serial.println("Dirt");
+        soil = 1;
       } else if (messageTemp == "Sand") {
-        Serial2.println("ON");
+        Serial.println("Sand");
+        soil = 2;
       } else {
         Serial.println("Nothing to be done");
+        soil = 0;
       }
     }
   }
@@ -71,7 +81,7 @@ void reconnect() {
 
 void setup() {
   Serial.begin(9600);
-  Serial2.begin(9600);
+  Serial2.begin(9600, SERIAL_8N1, RXPIN2, TXPIN2);
   setup_wifi();
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
@@ -80,6 +90,17 @@ void setup() {
 void loop() {
   if (!client.connected()) {
     reconnect();
+  }
+  
+  if ((soil == 1 || soil == 2) && soil != prev_soil){
+    if(soil == 1){
+      Serial2.println("1");
+    }else{
+      Serial2.println("2");
+    }
+  } else if ((soil == 0) && (soil != prev_soil))  {
+    Serial2.println("0");
+    prev_soil = 0;
   }
 
   client.loop();

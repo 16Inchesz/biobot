@@ -5,6 +5,7 @@ import numpy as np
 import paho.mqtt.client as mqtt
 import time
 
+
 #test.mosquitto.org
 #jetson_nano
 
@@ -46,6 +47,9 @@ class_names = open("labels.txt", "r").readlines()
 # CAMERA can be 0 or 1 based on default camera of your computer
 camera = cv2.VideoCapture(0)
 
+previous_class_name = None
+previous_confidence = None
+
 while True:
     # Grab the webcamera's image.
     ret, image = camera.read()
@@ -71,8 +75,18 @@ while True:
     # Print prediction and confidence score
     print("Class:", class_name[2:], end="")
     print("Confidence Score:", str(np.round(confidence_score * 100))[:-2], "%")
+    conf_class = class_name[2:] + ": " + str(np.round(confidence_score * 100))[:-2]
 
-    mqttc.publish("jetson_nano", class_name[2:], qos=2)
+    # Publish if any of the following conditions are met:
+    # 1. The current class name is different from the previous one.
+    # 2. The current confidence score is greater than the previous one by more than 5%.
+    # 3. The current confidence score is higher than 95% and greater than the previous confidence score.
+    if (class_name != previous_class_name or 
+        (class_name == previous_class_name and confidence_score > previous_confidence + 0.05) or
+        (confidence_score > 0.95 and confidence_score > previous_confidence)):
+        mqttc.publish("jetson_nano", conf_class, qos=2)
+        previous_class_name = class_name
+        previous_confidence = confidence_score
 
     # Listen to the keyboard for presses.
     keyboard_input = cv2.waitKey(1)
@@ -80,6 +94,7 @@ while True:
     # 27 is the ASCII for the esc key on your keyboard.
     if keyboard_input == 27:
         break
+    
 
 camera.release()
 cv2.destroyAllWindows()

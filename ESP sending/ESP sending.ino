@@ -76,11 +76,5 @@ void loop() {
     serializeJson(doc, jsonStr);
 
     client.publish(mqtt_topic, jsonStr.c_str());
-    Serial.println(sensor_value);
-
-    Serial2.println("ON");
-    
-    //debug
-    //Serial.println("hello boss");
   }
 }

@@ -1,0 +1,4 @@
+0 Dirt
+1 Sand
+2 Clay
+3 Nothing

@@ -1,5 +1,6 @@
 #include <morobot.h>
 #include <morobot_s_rrr.h>
+#include <Servo.h>
 
 #define relay_pumpe 6 // LOW = an, HIGH = aus
 
@@ -28,6 +29,8 @@ const float rad_dia = 17.51; // Durchmesser der Zahnriemenscheibe
 float absolute_pos = 0.0; // Absolut Position der Linearachse - muss eigenständig mit gezählt werden!! Zu achten ist dass die positive Bewegungsrichtung nach unten gerichtet ist!!
 
 String message = "";
+String prev_m = "";
+
   
 void lin_axis_ref()
 {
@@ -102,7 +105,7 @@ void blink_RLED()
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial3.begin(9600);
   // put your setup code here, to run once:
   pinMode(relay_pumpe, OUTPUT);
@@ -130,7 +133,7 @@ void setup()
 void measure(){
    // float tray_dis=43;  //distnc to tray on lin axis
   morobot.setSpeedRPM(5);
-  float move_distance = 60.0; // distance to move down and up
+  float move_distance = 90.0; // distance to move down and up
 
   // Move to (0, -45, 0)
   morobot.moveAngle(0, -45);
@@ -140,7 +143,7 @@ void measure(){
   move_lin_axis_mm(-move_distance);
   morobot.waitUntilIsReady();
 
-  delay(7000);
+  delay(10000);
 
   // Move back up 5mm
   move_lin_axis_mm(move_distance);
@@ -162,13 +165,17 @@ void loop()
     Serial.print(message);
     Serial.println("'");
   } else {
-    Serial.println("not here");
+    Serial.println("Serial port3 error");
   }
+
   delay(1000);
+
   message.trim();
-  if (message.equals("ON")) {
+
+  if ((message.equals("1") || message.equals("2")) && !message.equals(prev_m)) {
+    prev_m = message; 
     measure();
-  } else {
-    Serial.println("Nothing");
+  } else if (message.equals("0")){
+    Serial.println("nothing");
   }
 }
